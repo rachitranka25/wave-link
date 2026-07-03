@@ -6,24 +6,32 @@
 # noticeably slower than every one after it.
 FROM python:3.13-slim
 
-WORKDIR /app
+# Set up a non-root user for Hugging Face Spaces compatibility
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
 
+WORKDIR $HOME/app
+
+# (Switching back to root to install system dependencies is possible but we can just use root first, then switch)
+USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-# Install the CPU-only torch build first — this container never has a GPU,
-# and plain `pip install torch` pulls in ~1.5GB of unused NVIDIA CUDA
-# libraries. Installing the CPU wheel first satisfies the later
-# `pip install -r requirements.txt`'s unpinned "torch" line without
-# reinstalling it.
+# Install the CPU-only torch build first
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY data ./data
+# Switch back to non-root user for running the app
+USER user
 
-EXPOSE 8000
+COPY --chown=user app ./app
+COPY --chown=user data ./data
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Hugging Face Spaces uses port 7860
+EXPOSE 7860
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
