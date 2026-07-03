@@ -1,0 +1,10 @@
+.venv
+__pycache__
+*.pyc
+*.db
+.pytest_cache
+.git
+.claude
+frontend/node_modules
+frontend/dist
+tests

@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+transformers
+sentence-transformers
+torch
+scikit-learn
+pandas
+joblib
+python-multipart
+pytest
+httpx
